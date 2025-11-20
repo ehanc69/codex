@@ -177,6 +177,7 @@ pub(crate) async fn apply_bespoke_event_handling(
             cwd,
             reason,
             risk,
+            allow_prefix: _allow_prefix,
             parsed_cmd,
         }) => match api_version {
             ApiVersion::V1 => {
@@ -894,6 +895,7 @@ async fn on_exec_approval_response(
         .submit(Op::ExecApproval {
             id: event_turn_id,
             decision: response.decision,
+            allow_prefix: None,
         })
         .await
     {
@@ -1098,6 +1100,7 @@ async fn on_command_execution_request_approval_response(
         .submit(Op::ExecApproval {
             id: event_turn_id,
             decision,
+            allow_prefix: None,
         })
         .await
     {
