@@ -981,6 +981,7 @@ fn format_file_change_diff(change: &CoreFileChange) -> String {
         CoreFileChange::Update {
             unified_diff,
             move_path,
+            ..
         } => {
             if let Some(path) = move_path {
                 format!("{unified_diff}\n\nMoved to: {}", path.display())
