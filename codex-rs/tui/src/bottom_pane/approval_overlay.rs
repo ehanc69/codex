@@ -397,29 +397,30 @@ impl ApprovalOption {
 }
 
 fn exec_options(allow_prefix: Option<Vec<String>>) -> Vec<ApprovalOption> {
-    vec![
-        ApprovalOption {
-            label: "Yes, proceed".to_string(),
-            decision: ReviewDecision::Approved,
-            display_shortcut: None,
-            additional_shortcuts: vec![key_hint::plain(KeyCode::Char('y'))],
-        },
-        ApprovalOption {
-            label: "Yes, and don't ask again this session".to_string(),
-            decision: ReviewDecision::ApprovedForSession,
-            display_shortcut: None,
-            additional_shortcuts: vec![key_hint::plain(KeyCode::Char('a'))],
-        },
-    ]
-    .into_iter()
-    .chain(allow_prefix.map(|prefix| ApprovalOption {
-        label: "Yes, and don't ask again for commands with this prefix".to_string(),
-        decision: ReviewDecision::ApprovedAllowPrefix {
-            allow_prefix: prefix,
-        },
+    let allow_prefix_label = allow_prefix.as_ref().map(|prefix| {
+        let rendered_prefix = strip_bash_lc_and_escape(prefix);
+        format!("Yes, and don't ask again for `{rendered_prefix}` commands")
+    });
+
+    vec![ApprovalOption {
+        label: "Yes, proceed".to_string(),
+        decision: ReviewDecision::Approved,
         display_shortcut: None,
-        additional_shortcuts: vec![key_hint::plain(KeyCode::Char('p'))],
-    }))
+        additional_shortcuts: vec![key_hint::plain(KeyCode::Char('y'))],
+    }]
+    .into_iter()
+    .chain(
+        allow_prefix
+            .zip(allow_prefix_label)
+            .map(|(prefix, label)| ApprovalOption {
+                label,
+                decision: ReviewDecision::ApprovedAllowPrefix {
+                    allow_prefix: prefix,
+                },
+                display_shortcut: None,
+                additional_shortcuts: vec![key_hint::plain(KeyCode::Char('p'))],
+            }),
+    )
     .chain([ApprovalOption {
         label: "No, and tell Codex what to do differently".to_string(),
         decision: ReviewDecision::Abort,
@@ -590,7 +591,6 @@ mod tests {
         let (tx_raw, mut rx) = unbounded_channel::<AppEvent>();
         let tx = AppEventSender::new(tx_raw);
         let mut view = ApprovalOverlay::new(make_exec_request(), tx);
-        view.handle_key_event(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE));
         view.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
 
         assert!(
@@ -605,6 +605,6 @@ mod tests {
                 break;
             }
         }
-        assert_eq!(decision, Some(ReviewDecision::ApprovedForSession));
+        assert_eq!(decision, Some(ReviewDecision::Approved));
     }
 }
