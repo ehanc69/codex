@@ -1,6 +1,5 @@
 use std::any::Any;
 use std::sync::Arc;
-use std::sync::Mutex;
 
 use codex_execpolicy::Decision;
 use codex_execpolicy::Error;
